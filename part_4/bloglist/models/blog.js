@@ -1,3 +1,17 @@
+const mongoose = require('mongoose')
+const MONGODB_URI = require('../utils/config').MONGODB_URI
+
+mongoose.set('strictQuery', false)
+console.log('connecting to', MONGODB_URI)
+
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('connected to MongoDB')
+  })
+  .catch(error => {
+    console.log('error connecting to MongoDB: ', error.message)
+  })
+
 blogSchema.set('toJSON', {
     transform: (document, returnedObject) => {
       returnedObject.id = returnedObject._id.toString()
@@ -16,4 +30,6 @@ blogSchema.set('toJSON', {
       ref: 'User'
     }
   })
-    
+
+  
+  module.exports = mongoose.model('Blog', blogSchema)   
