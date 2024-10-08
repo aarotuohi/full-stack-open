@@ -1,79 +1,35 @@
-const jwt = require('jsonwebtoken')
 const router = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
-const userExtractor = require('../utils/middleware').userExtractor
+const { userExtractor } = require('../utils/middleware')
 
-router.get('/', async (request, response) => {
+router.get('/', async (req, res) => {
   const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
-
-  response.json(blogs)
+  res.json(blogs)
 })
 
-router.post('/', userExtractor, async (request, response) => {
-  const blog = new Blog(request.body)
-
-  const user = request.user
-
-  if (!user) {
-    return response.status(403).json({ error: 'user missing' })
-  }
-
-  if (!blog.title || !blog.url) {
-    return response.status(400).json({ error: 'title or url missing' })
-  }
-
-  blog.likes = blog.likes | 0
-  blog.user = user
-  user.blogs = user.blogs.concat(blog._id)
-
-  await user.save()
-
-  const savedBlog = await blog.save()
-
-  response.status(201).json(savedBlog)
+router.post('/', userExtractor, async (req, res) => {
+  const { title, url, likes = 0 } = req.body
+  if (!title || !url) return res.status(400).json({ error: 'title or url missing' })
+  const blog = new Blog({ ...req.body, likes, user: req.user._id })
+  req.user.blogs.push(blog._id)
+  await req.user.save()
+  res.status(201).json(await blog.save())
 })
 
-router.delete('/:id', userExtractor, async (request, response) => {
-  const user = request.user
-
-  const blog = await Blog.findById(request.params.id)
-  if (!blog) {
-    return response.status(204).end()
-  }
-
-  if (user.id.toString() !== blog.user.toString()) {
-    return response.status(403).json({ error: 'user not authorized' })
-  }
-
+router.delete('/:id', userExtractor, async (req, res) => {
+  const blog = await Blog.findById(req.params.id)
+  if (!blog) return res.status(204).end()
+  if (blog.user.toString() !== req.user.id) return res.status(403).json({ error: 'not authorized' })
   await blog.deleteOne()
-
-  user.blogs = user.blogs.filter(
-    (b) => b._id.toString() !== blog._id.toString()
-  )
-
-  await user.save()
-
-  response.status(204).end()
+  req.user.blogs = req.user.blogs.filter(b => b.toString() !== req.params.id)
+  await req.user.save()
+  res.status(204).end()
 })
 
-router.put('/:id', async (request, response) => {
-  const body = request.body
-
-  const blog = {
-    title: body.title,
-    author: body.author,
-    url: body.url,
-    likes: body.likes,
-  }
-
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {
-    new: true,
-  }).populate('user', { username: 1, name: 1 })
-
-  updatedBlog
-    ? response.status(200).json(updatedBlog.toJSON())
-    : response.status(404).end()
+router.put('/:id', async (req, res) => {
+  const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('user', { username: 1, name: 1 })
+  updatedBlog ? res.json(updatedBlog) : res.status(404).end()
 })
 
 module.exports = router
