@@ -1,16 +1,35 @@
 const mongoose = require('mongoose')
+const MONGODB_URI = require('../utils/config').MONGODB_URI
 
-const schema = mongoose.Schema({
-  title: String,
-  author: String,
-  url: String,
-  likes: Number,
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-})
+mongoose.set('strictQuery', false)
+console.log('connecting to', MONGODB_URI)
 
-schema.set('toJSON', {
-  transform: (_, obj) => { obj.id = obj._id.toString(); delete obj._id; delete obj.__v }
-})
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('connected to MongoDB')
+  })
+  .catch(error => {
+    console.log('error connecting to MongoDB: ', error.message)
+  })
 
-module.exports = mongoose.model('Blog', schema)
+blogSchema.set('toJSON', {
+    transform: (document, returnedObject) => {
+      returnedObject.id = returnedObject._id.toString()
+      delete returnedObject._id
+      delete returnedObject.__v
+    }
+  })
+  
+  const blogSchema = new mongoose.Schema({
+    title: String,
+    author: String,
+    url: String,
+    likes: Number,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  })
 
+  
+  module.exports = mongoose.model('Blog', blogSchema)   

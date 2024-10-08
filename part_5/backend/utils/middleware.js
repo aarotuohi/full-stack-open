@@ -1,35 +1,50 @@
-const jwt = require('jsonwebtoken')
-const logger = require('./logger')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+const secretWord = require('../utils/config').WORD_SECRET
 
-const requestLogger = (req, res, next) => {
-  logger.info(`Method: ${req.method}, Path: ${req.path}, Body:`, req.body)
-  next()
-}
-
-const unknownEndpoint = (req, res) => res.status(404).send({ error: 'unknown endpoint' })
-
-const errorHandler = (error, req, res, next) => {
-  logger.error(error.message)
-  const errorTypes = {
-    CastError: 400,
-    ValidationError: 400,
-    MongoServerError: error.message.includes('E11000') ? 400 : undefined
+const errorHandler = (error, request, response, next) => {
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  } else if (error.name === 'MongoServerError' && error.message.includes('E11000 duplicate key error')) {
+    return response.status(400).json({ error: 'expected `username` to be unique' })
+  } else if (error.name === 'JsonWebTokenError') {
+    return response.status(401).json({ error: 'token is missing or invalid'})
   }
-  if (errorTypes[error.name]) return res.status(errorTypes[error.name]).send({ error: error.message })
+
   next(error)
 }
 
-const getTokenFrom = (req) => req.get('authorization')?.replace('Bearer ', '') || null
+const tokenExtractor = (request, response, next) => {
+    const authorization = request.get('authorization')
+    if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+      request.token = authorization.substring(7)
+    }
+    next()
+  }
+  
+  const userExtractor = async (request, response, next) => {
+    if (request.token) {
+      const decodedToken = jwt.verify(request.token, secretWord)
+      if (!decodedToken.id){
+        request.user = null 
+      }
+      request.user = await User.findById(decodedToken.id)
+    }
+  
+    next()
+  }
+  
+  const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  module.exports = {
+    errorHandler,
+    tokenExtractor,
+    userExtractor,
+    unknownEndpoint
+  }
 
-const userExtractor = async (req, res, next) => {
-  const token = getTokenFrom(req)
-  if (!token) return res.status(401).json({ error: 'token missing' })
-  const decodedToken = jwt.verify(token, process.env.SECRET)
-  if (!decodedToken.id) return res.status(401).json({ error: 'token invalid' })
-  req.user = await User.findById(decodedToken.id)
-  if (!req.user) return res.status(401).json({ error: 'user not found' })
-  next()
-}
 
-module.exports = { requestLogger, unknownEndpoint, errorHandler, userExtractor }
+  
