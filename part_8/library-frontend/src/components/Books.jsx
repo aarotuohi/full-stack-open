@@ -5,30 +5,47 @@ import { ALL_BOOKS } from "../queries";
 
 const Books = (props) => {
   const [genreFilter, setGenreFilter] = useState("");
-  const allBooks = useQuery(ALL_BOOKS);
-  const filteredBooks = useQuery(ALL_BOOKS, { variables: { genre: genreFilter } });
+  const { data: allBooksData, loading: allBooksLoading, error: allBooksError } = useQuery(ALL_BOOKS);
+  const { data: filteredBooksData, loading: filteredBooksLoading, error: filteredBooksError } = useQuery(ALL_BOOKS, {
+    variables: { genre: genreFilter },
+  });
 
   if (!props.show) {
     return null;
   }
 
-  if (allBooks.loading || filteredBooks.loading) {
-    return <div>loading...</div>;
+  // Error handling
+  if (allBooksLoading || filteredBooksLoading) {
+    return <div>Loading books...</div>;
   }
 
-  const books = filteredBooks.data.allBooks;
+  if (allBooksError) {
+    return <div className="error-message">Error fetching all books: {allBooksError.message}</div>;
+  }
+
+  if (filteredBooksError) {
+    return <div className="error-message">Error fetching filtered books: {filteredBooksError.message}</div>;
+  }
+
+  // Safeguard for undefined data
+  if (!filteredBooksData || !filteredBooksData.allBooks) {
+    return <div>No books found</div>;
+  }
+
+  const books = filteredBooksData.allBooks;
 
   return (
     <div>
-      <h2>books</h2>
-
+      <h2>Books</h2>
       <table>
-        <tbody>
+        <thead>
           <tr>
-            <th></th>
-            <th>author</th>
-            <th>published</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Published</th>
           </tr>
+        </thead>
+        <tbody>
           {books.map((a) => (
             <tr key={a.title}>
               <td>{a.title}</td>
@@ -39,12 +56,12 @@ const Books = (props) => {
         </tbody>
       </table>
       <div>
-        {Array.from(new Set(allBooks.data.allBooks.flatMap(b => b.genres))).map((genre) => (
+        {Array.from(new Set(allBooksData.allBooks.flatMap(b => b.genres))).map((genre) => (
           <button key={genre} onClick={() => setGenreFilter(genre)}>
             {genre}
           </button>
         ))}
-        <button onClick={() => setGenreFilter("")}>all genres</button>
+        <button onClick={() => setGenreFilter("")}>All genres</button>
       </div>
     </div>
   );

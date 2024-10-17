@@ -1,0 +1,135 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .container {
+    width: 80%;
+    max-width: 1200px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  
+  h2, h3 {
+    color: #333;
+    text-align: center;
+  }
+  
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin: 10px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Table Styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+  
+  table th, table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+  }
+  
+  table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  input, select {
+    padding: 8px;
+    margin: 5px 0;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+  }
+  
+  form {
+    margin: 20px 0;
+  }
+  
+  form div {
+    margin-bottom: 10px;
+  }
+  
+  button[type="submit"] {
+    background-color: #28a745;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #218838;
+  }
+  
+  /* Genre Button Styles */
+  .genre-buttons {
+    margin: 10px 0;
+  }
+  
+  .genre-buttons button {
+    background-color: #6c757d;
+    margin-right: 5px;
+  }
+  
+  .genre-buttons button:hover {
+    background-color: #5a6268;
+  }
+  
+  /* Login Form Styles */
+  form.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  form.login-form input {
+    width: calc(100% - 10px);
+  }
+  
+  /* Loading and Error States */
+  .loading, .error {
+    text-align: center;
+    color: #666;
+  }
+  
+  .error {
+    color: red;
+  }
+  
+  /* Responsive Design */
+  @media only screen and (max-width: 600px) {
+    .container {
+      width: 95%;
+    }
+  
+    button {
+      width: 100%;
+      margin: 5px 0;
+    }
+  }
+  

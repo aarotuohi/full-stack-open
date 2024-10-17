@@ -61,6 +61,7 @@ const NewBook = (props) => {
         <div>
           <input
             value={genre}
+            type="genre"
             onChange={({ target }) => setGenre(target.value)}
           />
           <button onClick={addGenre} type="button">

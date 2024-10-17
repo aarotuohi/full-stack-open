@@ -6,6 +6,9 @@ import EditAuthor from "./components/EditAuthor";
 import Login from "./components/Login";
 import { useApolloClient } from "@apollo/client";
 import Recommendation from "./components/Recommendation";
+import './styles.css';
+
+
 
 const App = () => {
   const [page, setPage] = useState("authors");

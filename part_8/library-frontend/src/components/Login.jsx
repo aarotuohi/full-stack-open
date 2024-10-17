@@ -6,15 +6,22 @@ import { LOGIN } from "../queries";
 const Login = ({ show, setToken, setPage }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [login, result] = useMutation(LOGIN, {});
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [login, result] = useMutation(LOGIN, {
+    onError: (error) => {
+      setErrorMessage(error.graphQLErrors[0]?.message || "Something went wrong");
+    },
+  });
 
   useEffect(() => {
     if (result.data) {
       const token = result.data.login.value;
       setToken(token);
       localStorage.setItem("library-user-token", token);
+      setPage("authors");
+      setErrorMessage(null); 
     }
-  }, [result.data]);
+  }, [result.data, setToken, setPage]);
 
   if (!show) {
     return null;
@@ -22,29 +29,36 @@ const Login = ({ show, setToken, setPage }) => {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (!username || !password) {
+      setErrorMessage("Username and password are required");
+      return;
+    }
     await login({ variables: { username, password } });
-    setPage("authors");
   };
 
   return (
     <div>
+      <h2>Login</h2>
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
       <form onSubmit={submit}>
         <div>
-          name:{" "}
+          <label htmlFor="username">Username:</label>
           <input
+            id="username"
             value={username}
             onChange={({ target }) => setUsername(target.value)}
           />
         </div>
         <div>
-          password:{" "}
+          <label htmlFor="password">Password:</label>
           <input
+            id="password"
             type="password"
             value={password}
             onChange={({ target }) => setPassword(target.value)}
           />
         </div>
-        <button type="submit">login</button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );
