@@ -1,142 +1,149 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState as useInternalState, useEffect as useInternalEffect } from "react";
+import { useParams as getParams } from "react-router-dom";
 import axios from "axios";
-import { Alert, Box, Button, ButtonGroup, Stack, CircularProgress, Typography } from "@mui/material";
-import { Work, LocalHospital, HealthAndSafety, Favorite, Male, Female } from '@mui/icons-material';
+import { Alert as WarningMessage, Box as Container, Button as Clickable, ButtonGroup as ClickableGroup, Stack as ItemStack, CircularProgress as LoadingSpinner, Typography as TextDisplay } from "@mui/material";
+import { Work as JobIcon, LocalHospital as HospitalIcon, HealthAndSafety as HealthSafetyIcon, Favorite as HeartIcon, Male as MaleIcon, Female as FemaleIcon } from '@mui/icons-material';
 import AddEntryForm from "./AddEntryForm";
 import patientService from "../../services/patients";
-import { Diagnosis, Patient, Entry, EntryFormValues, EntryType } from "../../types";
-import { assertNever } from "../../utils";
+import { Diagnosis as MedicalCode, Patient as Person, Entry as Record, EntryFormValues as RecordFormValues, EntryType as RecordType } from "../../types";
 
-interface PatientPageProps {
-  diagnoses: Diagnosis[];
+
+// Props for the Patient Page
+interface PersonPageProps {
+  medicalCodes: MedicalCode[];
 }
 
-interface EntryDetailsProps {
-  diagnoses: Diagnosis[];
-  entry: Entry;
+// Props for Entry Details Component
+interface RecordDetailsProps {
+  medicalCodes: MedicalCode[];
+  record: Record;
 }
 
-interface DiagnosisListProps {
-  diagnoses: Diagnosis[];
-  entry: Entry;
+// Props for Diagnosis List
+interface MedicalCodeListProps {
+  medicalCodes: MedicalCode[];
+  record: Record;
 }
 
-interface HealthRatingBarProps {
-  rating: number;
+// HealthRatingBar props
+interface HealthStatusBarProps {
+  status: number;
 }
 
-const HealthRatingBar = ({ rating }: HealthRatingBarProps) => {
-  switch (rating) {
+// Health Status component
+const HealthStatusBar = ({ status }: HealthStatusBarProps) => {
+  switch (status) {
     case 0:
-      return <Favorite style={{color: "#00cc00"}}/>;
+      return <HeartIcon style={{color: "#00cc00"}}/>;
     case 1:
-      return <Favorite style={{color: "#ffff00"}}/>;
+      return <HeartIcon style={{color: "#ffff00"}}/>;
     case 2:
-      return <Favorite style={{color: "#ff6600"}}/>;
+      return <HeartIcon style={{color: "#ff6600"}}/>;
     case 3:
-      return <Favorite style={{color: "#ff0000"}}/>;
+      return <HeartIcon style={{color: "#ff0000"}}/>;
     default:
       return null;
   }
 };
 
-const DiagnosisList = ({diagnoses, entry}: DiagnosisListProps) => {
-  if (!entry.diagnosisCodes || entry.diagnosisCodes.length === 0) return null;
+// Diagnosis List Component
+const MedicalCodeList = ({medicalCodes, record}: MedicalCodeListProps) => {
+  if (!record.diagnosisCodes || record.diagnosisCodes.length === 0) return null;
 
   return (
     <ul>
-      {entry.diagnosisCodes?.map(code => (
+      {record.diagnosisCodes?.map(code => (
         <li key={code}>
-          {code} {diagnoses.find(diagnosis => diagnosis.code === code)?.name}
+          {code} {medicalCodes.find(medicalCode => medicalCode.code === code)?.name}
         </li>
       ))}
     </ul>
   );
 };
 
-const EntryDetails = ({ diagnoses, entry }: EntryDetailsProps ) => {
-  switch (entry.type) {
-    case EntryType.Hospital:
+// Entry Details Component
+const RecordDetails = ({ medicalCodes, record }: RecordDetailsProps ) => {
+  switch (record.type) {
+    case RecordType.Hospital:
       return (
       <div>
-        <Typography variant="body1">
-          {entry.date} <LocalHospital />
-        </Typography>
-        <Typography variant="body1">
-          <em>{entry.description}</em>
-        </Typography>
-        <Typography variant="body1">
-          Discharge: {entry.discharge.date} {entry.discharge.criteria}
-        </Typography>
-        <DiagnosisList diagnoses={diagnoses} entry={entry} />
-        <Typography variant="body1">
-          diagnose by {entry.specialist}
-        </Typography>
+        <TextDisplay variant="body1">
+          {record.date} <HospitalIcon />
+        </TextDisplay>
+        <TextDisplay variant="body1">
+          <em>{record.description}</em>
+        </TextDisplay>
+        <TextDisplay variant="body1">
+          Discharge: {record.discharge.date} {record.discharge.criteria}
+        </TextDisplay>
+        <MedicalCodeList medicalCodes={medicalCodes} record={record} />
+        <TextDisplay variant="body1">
+          diagnosed by {record.specialist}
+        </TextDisplay>
       </div>
       );
-    case EntryType.HealthCheck:
+    case RecordType.HealthCheck:
       return (
         <div>
-          <Typography variant="body1">
-            {entry.date} <HealthAndSafety />
-          </Typography>
-          <Typography variant="body1">
-            <em>{entry.description}</em>
-          </Typography>
-          <HealthRatingBar rating={entry.healthCheckRating} />
-          <DiagnosisList diagnoses={diagnoses} entry={entry} />
-          <Typography variant="body1">
-            diagnose by {entry.specialist}
-          </Typography>
+          <TextDisplay variant="body1">
+            {record.date} <HealthSafetyIcon />
+          </TextDisplay>
+          <TextDisplay variant="body1">
+            <em>{record.description}</em>
+          </TextDisplay>
+          <HealthStatusBar status={record.healthCheckRating} />
+          <MedicalCodeList medicalCodes={medicalCodes} record={record} />
+          <TextDisplay variant="body1">
+            diagnosed by {record.specialist}
+          </TextDisplay>
         </div>
       );
-    case EntryType.OccupationalHealthcare:
+    case RecordType.OccupationalHealthcare:
       return (
         <div>
-          <Typography variant="body1">
-            {entry.date} <Work /> {entry.employerName}
-          </Typography>
-          <Typography variant="body1">
-            <em>{entry.description}</em>
-          </Typography>
-          {entry.sickLeave && (
-            <Typography variant="body1">
-              Sick Leave: {entry.sickLeave.startDate} - {entry.sickLeave.endDate}
-            </Typography>
+          <TextDisplay variant="body1">
+            {record.date} <JobIcon /> {record.employerName}
+          </TextDisplay>
+          <TextDisplay variant="body1">
+            <em>{record.description}</em>
+          </TextDisplay>
+          {record.sickLeave && (
+            <TextDisplay variant="body1">
+              Sick Leave: {record.sickLeave.startDate} - {record.sickLeave.endDate}
+            </TextDisplay>
           )}
-          <DiagnosisList diagnoses={diagnoses} entry={entry} />
-          <Typography variant="body1">
-            diagnose by {entry.specialist}
-          </Typography>
+          <MedicalCodeList medicalCodes={medicalCodes} record={record} />
+          <TextDisplay variant="body1">
+            diagnosed by {record.specialist}
+          </TextDisplay>
         </div>
       );
-    default:
-      return assertNever(entry);
+    
   }
 };
 
-const PatientPage = ({ diagnoses }: PatientPageProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [patient, setPatient] = useState<Patient>();
-  const [error, setError] = useState<string>();
-  const { id } = useParams<{ id: string }>();
-  const [showForm, setShowForm] = useState<boolean>(false);
-  const [showEntryOptions, setShowEntryOptions] = useState<boolean>(false);
-  const [entryType, setEntryType] = useState<EntryType>();
+// Patient Page Component
+const PersonPage = ({ medicalCodes }: PersonPageProps) => {
+  const [loading, setLoading] = useInternalState(true);
+  const [person, setPerson] = useInternalState<Person>();
+  const [error, setError] = useInternalState<string>();
+  const { id } = getParams<{ id: string }>();
+  const [showForm, setShowForm] = useInternalState<boolean>(false);
+  const [showEntryOptions, setShowEntryOptions] = useInternalState<boolean>(false);
+  const [recordType, setRecordType] = useInternalState<RecordType>();
 
-  useEffect(() => {
-    const fetchPatient = async () => {
+  useInternalEffect(() => {
+    const fetchPerson = async () => {
       try {
-        const patient = await patientService.getById(id);
-        setPatient(patient);
-        setIsLoading(false);
+        const person = await patientService.getById(id);
+        setPerson(person);
+        setLoading(false);
       } catch (e) {
         console.log(e);
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    fetchPatient();
+    fetchPerson();
   }, [id]);
 
   const toggleForm = () => {
@@ -144,16 +151,16 @@ const PatientPage = ({ diagnoses }: PatientPageProps) => {
     setError(undefined);
   };
 
-  const handleSelectingEntryType = (entryType: EntryType) => {
-    setEntryType(entryType);
+  const handleSelectingRecordType = (recordType: RecordType) => {
+    setRecordType(recordType);
     setShowEntryOptions(false);
     setShowForm(true);
   };
 
-  const submitNewEntry = async (values: EntryFormValues) => {
+  const submitNewRecord = async (values: RecordFormValues) => {
     try {
-      const patient = await patientService.addEntry(id, values);
-      setPatient(patient);
+      const person = await patientService.addEntry(id, values);
+      setPerson(person);
       toggleForm();
     }
     catch (e: unknown) {
@@ -172,76 +179,76 @@ const PatientPage = ({ diagnoses }: PatientPageProps) => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <Box
+      <Container
         display="flex"
         justifyContent="center"
         alignItems="center"
         height="30vh"
       >
-        <CircularProgress />
-      </Box>
+        <LoadingSpinner />
+      </Container>
     );
   }
 
-  if (!patient) {
+  if (!person) {
     return (
       <div>
-        <Box sx={{ mt: 4 }} >
-          <Typography variant="h5">
-            Patient not found
-          </Typography>
-        </Box>
+        <Container sx={{ mt: 4 }} >
+          <TextDisplay variant="h5">
+            Person not found
+          </TextDisplay>
+        </Container>
       </div>
     );
   }
 
   return (
     <div>
-        <Box sx={{ mt: 4 }} >
-          <Typography variant="h5" sx={{ mb: 3 }}>
-            {patient.name}
-            {patient.gender === "male" && <Male />}
-            {patient.gender === "female" && <Female />}
-          </Typography>
-          <Typography variant="body1">
-            ssn: {patient.ssn}
-          </Typography>
-          <Typography variant="body1">
-            occupation: {patient.occupation}
-          </Typography>
-          {error && <Alert severity="error">{error}</Alert>}
+        <Container sx={{ mt: 4 }} >
+          <TextDisplay variant="h5" sx={{ mb: 3 }}>
+            {person.name}
+            {person.gender === "male" && <MaleIcon />}
+            {person.gender === "female" && <FemaleIcon />}
+          </TextDisplay>
+          <TextDisplay variant="body1">
+            ssn: {person.ssn}
+          </TextDisplay>
+          <TextDisplay variant="body1">
+            occupation: {person.occupation}
+          </TextDisplay>
+          {error && <WarningMessage severity="error">{error}</WarningMessage>}
           {!showForm && showEntryOptions &&(
-            <ButtonGroup variant="text" aria-label="text button group">
-              <Button sx={{mt: 3}} onClick={() => handleSelectingEntryType(EntryType.HealthCheck)}>New HealthCheck entry</Button>
-              <Button sx={{mt: 3}} onClick={() => handleSelectingEntryType(EntryType.Hospital)}>New Hospital entry</Button>
-              <Button sx={{mt: 3}} onClick={() => handleSelectingEntryType(EntryType.OccupationalHealthcare)}>New OccupationalHealthcare entry</Button>
-              <Button sx={{mt: 3}} onClick={() => setShowEntryOptions(false)}>Cancel</Button>
-            </ButtonGroup>
+            <ClickableGroup variant="text" aria-label="text button group">
+              <Clickable sx={{mt: 3}} onClick={() => handleSelectingRecordType(RecordType.HealthCheck)}>New HealthCheck entry</Clickable>
+              <Clickable sx={{mt: 3}} onClick={() => handleSelectingRecordType(RecordType.Hospital)}>New Hospital entry</Clickable>
+              <Clickable sx={{mt: 3}} onClick={() => handleSelectingRecordType(RecordType.OccupationalHealthcare)}>New OccupationalHealthcare entry</Clickable>
+              <Clickable sx={{mt: 3}} onClick={() => setShowEntryOptions(false)}>Cancel</Clickable>
+            </ClickableGroup>
           )}
           {!showForm && !showEntryOptions && (
-            <Button sx={{mt: 3}} variant="contained" onClick={() => setShowEntryOptions(true)}>New entry</Button>
+            <Clickable sx={{mt: 3}} variant="contained" onClick={() => setShowEntryOptions(true)}>New entry</Clickable>
           )}
           {showForm && (
-            <AddEntryForm onCancel={toggleForm} onSubmit={submitNewEntry} entryType={entryType} diagnoses={diagnoses}/>
+            <AddEntryForm onCancel={toggleForm} onSubmit={submitNewRecord} recordType={recordType} medicalCodes={medicalCodes}/>
           )}
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+          <TextDisplay variant="h6" sx={{ mt: 3, mb: 1 }}>
             entries
-          </Typography>
-          {patient.entries.map(entry => (
-            <Stack key={entry.id} sx={{ border: 1, borderRadius: 2, padding: 2, my: 2 }}>
-              <EntryDetails entry={entry} diagnoses={diagnoses} />
-            </Stack>
+          </TextDisplay>
+          {person.entries.map(record => (
+            <ItemStack key={record.id} sx={{ border: 1, borderRadius: 2, padding: 2, my: 2 }}>
+              <RecordDetails record={record} medicalCodes={medicalCodes} />
+            </ItemStack>
           ))}
-          {patient.entries.length === 0 && (
-            <Typography variant="body1" sx={{ mt: 1 }}>
+          {person.entries.length === 0 && (
+            <TextDisplay variant="body1" sx={{ mt: 1 }}>
               no entries
-            </Typography>
+            </TextDisplay>
           )}  
-      </Box>
+      </Container>
     </div>
   );
 };
 
-export default PatientPage;
+export default PersonPage;
