@@ -35,7 +35,7 @@ if (process.argv.length === 3) {
   });
 }
 
-// Jos komentorivillä on nimi ja numero, lisätään uusi henkilö tietokantaan
+
 else if (process.argv.length === 5) {
   const name = process.argv[3];
   const number = process.argv[4];
@@ -51,7 +51,6 @@ else if (process.argv.length === 5) {
   });
 }
 
-// Jos parametreja on väärä määrä, näytetään ohjeistus
 else {
   console.log('Usage: node mongo.js <password> <name> <number>');
   process.exit(1);
