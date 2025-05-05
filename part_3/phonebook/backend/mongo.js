@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Tarkista, että komentoriviparametrit ovat oikein
+
 if (process.argv.length < 3) {
   console.log('give password as argument');
   process.exit(1);
@@ -9,14 +9,14 @@ if (process.argv.length < 3) {
 const password = process.argv[2];
 
 
-// Yhteysosoite, muista korvata <username>, <password>, ja <dbname> oikeilla arvoilla
+
 const url = `mongodb+srv://aaro:<password>@cluster0.0gmbs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
-// Yhdistä MongoDB-tietokantaan
+
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// Määrittele skeema ja malli henkilöille
+
 const personSchema = new mongoose.Schema({
   name: String,
   number: String,
@@ -24,7 +24,7 @@ const personSchema = new mongoose.Schema({
 
 const Person = mongoose.model('Person', personSchema);
 
-// Jos komentorivillä on vain salasana, listataan kaikki henkilöt
+
 if (process.argv.length === 3) {
   Person.find({}).then(result => {
     console.log('phonebook:');
